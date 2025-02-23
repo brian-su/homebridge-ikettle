@@ -3,7 +3,7 @@
     "displayName": "iKettle",
     "type": "module",
     "version": "1.0.0-beta",
-    "description": "A short description about what your plugin does.",
+    "description": "iKettle integration right into the Home app.",
     "author": "Brian Surgenor",
     "license": "MIT",
     "homepage": "https://github.com/brian-su/homebridge-ikettle#readme",
