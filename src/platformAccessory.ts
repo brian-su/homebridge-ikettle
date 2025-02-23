@@ -40,8 +40,8 @@ export class iKettlePlatformAccessory {
             .setCharacteristic(platform.Characteristic.FirmwareRevision, this.deviceDetails.status.firmware_version);
 
         this.heaterService =
-            this.accessory.getService('Boiling Service') ||
-            this.accessory.addService(this.platform.Service.Thermostat, 'Boiling Service', this.deviceId);
+            this.accessory.getService(this.deviceDetails.name) ||
+            this.accessory.addService(this.platform.Service.Thermostat, this.deviceDetails.name, this.deviceId);
 
         this.heaterService
             .getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
@@ -153,9 +153,15 @@ export class iKettlePlatformAccessory {
     private watchKettle() {
         this.kettleManager.watchDevice(this.deviceId).subscribe({
             next: (update) => {
-                this.log.debug('Device update received');
+                this.log.debug('Device update received', {
+                    id: this.deviceId,
+                    state: update.status.state,
+                    waterTemp: update.status.water_temperature,
+                    waterLevel: update.status.water_level,
+                    boilingTemp: update.status.boil_temperature
+                });
                 this.deviceDetails = update;
-                this.triggerAllTheGets();
+                this.updateHomeKit();
             },
             error: (error) => {
                 this.log.error('Device details failed to update', error);
@@ -166,10 +172,31 @@ export class iKettlePlatformAccessory {
         });
     }
 
-    private triggerAllTheGets() {
-        this.handleCurrentHeatingCoolingStateGet();
-        this.handleTargetHeatingCoolingStateGet();
-        this.handleCurrentTemperatureGet();
-        this.handleTargetTemperatureGet();
+    private updateHomeKit() {
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
+            .updateValue(this.getCurrentHeatingCoolingState(this.deviceDetails));
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+            .updateValue(this.getTargetHeatingCoolingState(this.deviceDetails));
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+            .updateValue(this.deviceDetails.status.water_temperature);
+
+        this.heaterService.getCharacteristic(this.platform.Characteristic.TargetTemperature).updateValue(this.deviceDetails.status.boil_temperature);
+    }
+
+    private getCurrentHeatingCoolingState(newState: DeviceModel) {
+        return newState.status.state === 'Boiling'
+            ? this.platform.Characteristic.CurrentHeatingCoolingState.HEAT
+            : this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
+    }
+
+    private getTargetHeatingCoolingState(newState: DeviceModel) {
+        return newState.status.state === 'Boiling'
+            ? this.platform.Characteristic.TargetHeatingCoolingState.HEAT
+            : this.platform.Characteristic.TargetHeatingCoolingState.OFF;
     }
 }

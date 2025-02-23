@@ -30,3 +30,5 @@ Once installed update the config and reboot your homebridge. The plugin will han
 I only have 1 v3 iKettle. So that's all I've tested this with. I _think_ it should work if you have multiple v3 Kettles but I make no promises about a v2 or v1 iKettle.
 
 Currently the plugin specifically looks for the device model 'SMKET01', partly to stop it trying to pick up and interact incorrectly with a coffee machine, if you want to try your v1/v2 iKettle open up an issue on the repo and I'll see what I can do.
+
+Also the plugin only support Celsius right now.
