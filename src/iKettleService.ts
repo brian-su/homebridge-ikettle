@@ -151,6 +151,21 @@ export class iKettleService {
         await this.sendCommand(deviceId, 'set_manual_boil_temperature', data);
     }
 
+    public async setFormulaMode(userId: string, deviceId: string, value: boolean) {
+        const data = { user_id: userId, value: value } as CommandModel;
+        await this.sendCommand(deviceId, 'set_formula_mode_enable', data);
+    }
+
+    public async setFormulaModeTemperature(userId: string, deviceId: string, temp: number) {
+        const data = { user_id: userId, value: temp } as CommandModel;
+        await this.sendCommand(deviceId, 'set_formula_mode_temperature', data);
+    }
+
+    public async setKeepWarmTime(userId: string, deviceId: string, minutes: number) {
+        const data = { user_id: userId, value: minutes } as CommandModel;
+        await this.sendCommand(deviceId, 'set_keep_warm_time', data);
+    }
+
     private async sendCommand(deviceId: string, command: string, commandData: CommandModel) {
         this.authenticate();
         const db = getDatabase(this.app);
@@ -166,11 +181,11 @@ export class iKettleService {
     }
 
     private async authenticate() {
-        const tokenExpiry = new Date((this.userCredential as any).user.stsTokenManager.expirationTime);
-
+        // I think this will handle it for me?
         await this.userCredential?.user.getIdToken();
         return;
 
+        const tokenExpiry = new Date((this.userCredential as any).user.stsTokenManager.expirationTime);
         if (tokenExpiry <= new Date()) {
             await this.userCredential?.user.getIdToken(true);
         }
