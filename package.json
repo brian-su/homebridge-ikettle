@@ -2,7 +2,7 @@
     "name": "homebridge-ikettle",
     "displayName": "iKettle",
     "type": "module",
-    "version": "1.0.0",
+    "version": "1.0.0-beta",
     "private": true,
     "description": "A short description about what your plugin does.",
     "author": "Brian Surgenor",
