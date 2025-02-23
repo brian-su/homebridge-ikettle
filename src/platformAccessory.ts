@@ -49,6 +49,7 @@ export class iKettlePlatformAccessory {
 
         this.heaterService
             .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+            .setProps({ minValue: 0, maxValue: 1, validValues: [0, 1] })
             .onGet(this.handleTargetHeatingCoolingStateGet.bind(this))
             .onSet(this.handleTargetHeatingCoolingStateSet.bind(this));
 
@@ -152,7 +153,7 @@ export class iKettlePlatformAccessory {
     private watchKettle() {
         this.kettleManager.watchDevice(this.deviceId).subscribe({
             next: (update) => {
-                this.log.info('Device update received');
+                this.log.debug('Device update received');
                 this.deviceDetails = update;
                 this.triggerAllTheGets();
             },

@@ -5,5 +5,5 @@
     },
     "editor.rulers": [140],
     "eslint.enable": true,
-    "cSpell.words": ["ikettle"]
+    "cSpell.words": ["Homekit", "ikettle"]
 }
