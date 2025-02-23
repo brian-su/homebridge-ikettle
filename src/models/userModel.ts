@@ -4,7 +4,7 @@ export interface UserModel {
     email: string;
     first_name: string;
     last_name: string;
-    networks_index: Dictionary<string>;
+    networks_index: Map<string, string>;
     photoURL: string;
     temperature_unit: number;
 }

@@ -1,6 +1,8 @@
-import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
+import type { CharacteristicValue, Logger, PlatformAccessory, Service } from 'homebridge';
 
 import type { IKettlePlatform } from './platform.js';
+import { DeviceModel } from './models/deviceModel.js';
+import { iKettleService } from './iKettleService.js';
 
 /**
  * Platform Accessory
@@ -8,145 +10,165 @@ import type { IKettlePlatform } from './platform.js';
  * Each accessory may expose multiple services of different service types.
  */
 export class iKettlePlatformAccessory {
-    // private service: Service;
+    private deviceId: string;
+    private userId: string;
 
-    /**
-     * These are just used to create a working example
-     * You should implement your own code to track the state of your accessory
-     */
-    private exampleStates = {
-        On: false,
-        Brightness: 100
-    };
+    private deviceDetails: DeviceModel;
+    private log: Logger;
+    private kettleManager: iKettleService;
+
+    private readonly heaterService: Service;
 
     constructor(
         private readonly platform: IKettlePlatform,
         private readonly accessory: PlatformAccessory
     ) {
-        // set accessory information
-        this.accessory
-            .getService(this.platform.Service.AccessoryInformation)!
-            .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
-            .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
-            .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
+        this.log = platform.log;
+        this.deviceDetails = this.accessory.context.device;
 
-        // get the LightBulb service if it exists, otherwise create a new LightBulb service
-        // you can create multiple services for each accessory
+        this.deviceId = this.deviceDetails.id;
+        this.userId = this.deviceDetails.id;
 
-        if (accessory.context.device.CustomService) {
-            // This is only required when using Custom Services and Characteristics not support by HomeKit
-            // this.service =
-            //     this.accessory.getService(this.platform.CustomServices[accessory.context.device.CustomService]) ||
-            //     this.accessory.addService(this.platform.CustomServices[accessory.context.device.CustomService]);
-        } else {
-            // this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+        this.kettleManager = iKettleService.getInstance(this.log);
+        this.watchKettle();
+
+        accessory
+            .getService(platform.Service.AccessoryInformation)!
+            .setCharacteristic(platform.Characteristic.Manufacturer, 'Smarter.Am')
+            .setCharacteristic(platform.Characteristic.Model, this.deviceDetails.name)
+            .setCharacteristic(platform.Characteristic.SerialNumber, this.deviceDetails.status.device_model)
+            .setCharacteristic(platform.Characteristic.FirmwareRevision, this.deviceDetails.status.firmware_version);
+
+        this.heaterService =
+            this.accessory.getService('Boiling Service') ||
+            this.accessory.addService(this.platform.Service.Thermostat, 'Boiling Service', this.deviceId);
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState)
+            .onGet(this.handleCurrentHeatingCoolingStateGet.bind(this));
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+            .onGet(this.handleTargetHeatingCoolingStateGet.bind(this))
+            .onSet(this.handleTargetHeatingCoolingStateSet.bind(this));
+
+        this.heaterService.getCharacteristic(this.platform.Characteristic.CurrentTemperature).onGet(this.handleCurrentTemperatureGet.bind(this));
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.TargetTemperature)
+            .setProps({ minValue: 0, maxValue: 100, minStep: 5 })
+            .onGet(this.handleTargetTemperatureGet.bind(this))
+            .onSet(this.handleTargetTemperatureSet.bind(this));
+
+        this.heaterService
+            .getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
+            .onGet(this.handleTemperatureDisplayUnitsGet.bind(this))
+            .onSet(this.handleTemperatureDisplayUnitsSet.bind(this));
+
+        this.heaterService.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity).onGet(this.getWaterLevel.bind(this));
+    }
+
+    private async handleCurrentHeatingCoolingStateGet() {
+        this.log.debug('Triggered GET CurrentHeatingCoolingState');
+
+        if (this.deviceDetails.status.state === 'Idle') {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
         }
 
-        // set the service name, this is what is displayed as the default name on the Home app
-        // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-        // this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.exampleDisplayName);
+        if (this.deviceDetails.status.state === 'Boiling') {
+            return this.platform.Characteristic.CurrentHeatingCoolingState.HEAT;
+        }
 
-        // each service must implement at-minimum the "required characteristics" for the given service type
-        // see https://developers.homebridge.io/#/service/Lightbulb
-
-        // register handlers for the On/Off Characteristic
-        // this.service
-        //     .getCharacteristic(this.platform.Characteristic.On)
-        //     .onSet(this.setOn.bind(this)) // SET - bind to the `setOn` method below
-        //     .onGet(this.getOn.bind(this)); // GET - bind to the `getOn` method below
-
-        // register handlers for the Brightness Characteristic
-        // this.service.getCharacteristic(this.platform.Characteristic.Brightness).onSet(this.setBrightness.bind(this)); // SET - bind to the `setBrightness` method below
-
-        /**
-         * Creating multiple services of the same type.
-         *
-         * To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
-         * when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
-         * this.accessory.getService('NAME') || this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE_ID');
-         *
-         * The USER_DEFINED_SUBTYPE must be unique to the platform accessory (if you platform exposes multiple accessories, each accessory
-         * can use the same subtype id.)
-         */
-
-        // Example: add two "motion sensor" services to the accessory
-        const motionSensorOneService =
-            this.accessory.getService('Motion Sensor One Name') ||
-            this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
-
-        const motionSensorTwoService =
-            this.accessory.getService('Motion Sensor Two Name') ||
-            this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
-
-        /**
-         * Updating characteristics values asynchronously.
-         *
-         * Example showing how to update the state of a Characteristic asynchronously instead
-         * of using the `on('get')` handlers.
-         * Here we change update the motion sensor trigger states on and off every 10 seconds
-         * the `updateCharacteristic` method.
-         *
-         */
-        let motionDetected = false;
-        setInterval(() => {
-            // EXAMPLE - inverse the trigger
-            motionDetected = !motionDetected;
-
-            // push the new value to HomeKit
-            motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
-            motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
-
-            this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
-            this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
-        }, 10000);
+        this.log.error('Unknown kettle state', this.deviceDetails.status.state);
+        return this.platform.Characteristic.CurrentHeatingCoolingState.OFF;
     }
 
-    /**
-     * Handle "SET" requests from HomeKit
-     * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
-     */
-    async setOn(value: CharacteristicValue) {
-        // implement your own code to turn your device on/off
-        this.exampleStates.On = value as boolean;
+    private async handleTargetHeatingCoolingStateGet() {
+        this.log.debug('Triggered GET TargetHeatingCoolingState');
 
-        this.platform.log.debug('Set Characteristic On ->', value);
+        if (this.deviceDetails.status.state === 'Idle') {
+            return this.platform.Characteristic.TargetHeatingCoolingState.OFF;
+        }
+
+        if (this.deviceDetails.status.state === 'Boiling') {
+            return this.platform.Characteristic.TargetHeatingCoolingState.HEAT;
+        }
+
+        this.log.error('Unknown kettle state', this.deviceDetails.status.state);
+        return this.platform.Characteristic.TargetHeatingCoolingState.OFF;
     }
 
-    /**
-   * Handle the "GET" requests from HomeKit
-   * These are sent when HomeKit wants to know the current state of the accessory, for example, checking if a Light bulb is on.
-   *
-   * GET requests should return as fast as possible. A long delay here will result in
-   * HomeKit being unresponsive and a bad user experience in general.
-   *
-   * If your device takes time to respond you should update the status of your device
-   * asynchronously instead using the `updateCharacteristic` method instead.
-   * In this case, you may decide not to implement `onGet` handlers, which may speed up
-   * the responsiveness of your device in the Home app.
+    private async handleTargetHeatingCoolingStateSet(value: CharacteristicValue) {
+        this.log.debug('Triggered SET TargetHeatingCoolingState:', value);
 
-   * @example
-   * this.service.updateCharacteristic(this.platform.Characteristic.On, true)
-   */
-    async getOn(): Promise<CharacteristicValue> {
-        // implement your own code to check if the device is on
-        const isOn = this.exampleStates.On;
+        if (value == this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
+            this.log.info('Boiling kettle');
+            this.kettleManager.startBoil(this.userId, this.deviceId);
+            return;
+        }
 
-        this.platform.log.debug('Get Characteristic On ->', isOn);
+        if (value == this.platform.Characteristic.TargetHeatingCoolingState.OFF) {
+            this.log.info('Stopping  kettle');
+            this.kettleManager.stopBoil(this.userId, this.deviceId);
+            return;
+        }
 
-        // if you need to return an error to show the device as "Not Responding" in the Home app:
-        // throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-
-        return isOn;
+        this.log.error('Invalid heating state, please use only off/heat');
+        this.handleTargetHeatingCoolingStateGet();
     }
 
-    /**
-     * Handle "SET" requests from HomeKit
-     * These are sent when the user changes the state of an accessory, for example, changing the Brightness
-     */
-    async setBrightness(value: CharacteristicValue) {
-        // implement your own code to set the brightness
-        this.exampleStates.Brightness = value as number;
+    private async handleCurrentTemperatureGet() {
+        this.log.debug('Triggered GET CurrentTemperature');
 
-        this.platform.log.debug('Set Characteristic Brightness -> ', value);
+        const currentValue = this.deviceDetails.status.water_temperature;
+        return currentValue;
+    }
+
+    public async handleTargetTemperatureGet() {
+        this.log.debug('Triggered GET TargetTemperature');
+        return this.deviceDetails.status.boil_temperature;
+    }
+
+    public async handleTargetTemperatureSet(value: CharacteristicValue) {
+        const parsedValue = value as number;
+        this.log.debug(`Setting target temperature: ${parsedValue}°C`);
+
+        await this.kettleManager.setBoilTemp(this.userId, this.deviceId, parsedValue);
+    }
+
+    public async handleTemperatureDisplayUnitsGet() {
+        // this.log.debug('Triggered GET TemperatureDisplayUnits');
+        return this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS;
+    }
+
+    public async handleTemperatureDisplayUnitsSet(value: CharacteristicValue) {
+        // this.log.debug('Triggered SET TemperatureDisplayUnits:', value);
+    }
+
+    private async getWaterLevel() {
+        return this.deviceDetails.status.water_level;
+    }
+
+    private watchKettle() {
+        this.kettleManager.watchDevice(this.deviceId).subscribe({
+            next: (update) => {
+                this.log.info('Device update received');
+                this.deviceDetails = update;
+                this.triggerAllTheGets();
+            },
+            error: (error) => {
+                this.log.error('Device details failed to update', error);
+            },
+            complete: () => {
+                this.log.info(`Stopped watching for updates on ${this.deviceId} - ${this.deviceDetails.name}`);
+            }
+        });
+    }
+
+    private triggerAllTheGets() {
+        this.handleCurrentHeatingCoolingStateGet();
+        this.handleTargetHeatingCoolingStateGet();
+        this.handleCurrentTemperatureGet();
+        this.handleTargetTemperatureGet();
     }
 }

@@ -2,7 +2,7 @@
     "watch": ["src"],
     "ext": "ts",
     "ignore": [],
-    "exec": "tsc && homebridge -U ./test/hbConfig -P ./test/hbPlugins -D -I",
+    "exec": "tsc && homebridge -U ./test/hbConfig -D -I",
     "signal": "SIGTERM",
     "env": {
         "NODE_OPTIONS": "--trace-warnings"

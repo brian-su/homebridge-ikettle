@@ -6,15 +6,18 @@ import { NetworkModel } from './models/networkModel';
 import { DeviceModel } from './models/deviceModel';
 import { CommandModel } from './models/commandModel';
 import { Observable } from 'rxjs';
-import { PlatformConfig } from 'homebridge';
+import { Logger, PlatformConfig } from 'homebridge';
 import { SUPPORTED_DEVICES } from './models/constants.js';
 
 export class iKettleService {
+    private readonly log: Logger;
     private app: FirebaseApp;
     private static instance: iKettleService;
     private userCredential: UserCredential | undefined;
 
-    constructor() {
+    constructor(log: Logger) {
+        this.log = log;
+
         const firebaseConfig: FirebaseOptions = {
             apiKey: 'AIzaSyD0IOPaFj2zkMs5_rStrSRQ-m02bLwj88c',
             authDomain: 'smarter-live.firebaseapp.com',
@@ -28,9 +31,9 @@ export class iKettleService {
     }
 
     // TODO: Unsure if this is the best way to got about things
-    static getInstance(): iKettleService {
+    static getInstance(log: Logger): iKettleService {
         if (!iKettleService.instance) {
-            iKettleService.instance = new iKettleService();
+            iKettleService.instance = new iKettleService(log);
         }
         return iKettleService.instance;
     }
@@ -42,14 +45,17 @@ export class iKettleService {
                     const auth = getAuth(this.app);
 
                     this.userCredential = await signInWithEmailAndPassword(auth, config.email, config.password);
-                    const user = await this.getUser(this.userCredential.user.uid);
+                    const userId = this.userCredential.user.uid;
+                    const user = await this.getUser(userId);
 
                     for (const networkId in user.networks_index) {
                         const network = await this.getNetwork(networkId);
+
                         for (const [deviceId, deviceName] of Object.entries(network.associated_devices)) {
                             const deviceModel = await this.getDevice(deviceId);
                             if (SUPPORTED_DEVICES.includes(deviceModel.status.device_model)) {
                                 deviceModel.id = deviceId;
+                                deviceModel.userId = userId;
                                 deviceModel.name = deviceName;
                                 subscriber.next(deviceModel);
                             }
@@ -72,7 +78,7 @@ export class iKettleService {
                 return userSnapshot.val();
             }
         } catch (error) {
-            console.error(error);
+            this.log.error(JSON.stringify(error));
         }
 
         throw new Error("Couldn't find user details");
@@ -86,7 +92,7 @@ export class iKettleService {
                 return networkSnapshot.val();
             }
         } catch (error) {
-            console.error(error);
+            this.log.error(JSON.stringify(error));
         }
 
         throw new Error("Couldn't find network details");
@@ -100,20 +106,28 @@ export class iKettleService {
                 return networkSnapshot.val();
             }
         } catch (error) {
-            console.error(error);
+            this.log.error(JSON.stringify(error));
         }
 
         throw new Error("Couldn't find device details");
     }
 
-    public watchDevice(deviceId: string) {
-        console.log('watching device');
+    public watchDevice(deviceId: string): Observable<DeviceModel> {
         const dbRef = ref(getDatabase(), `devices/${deviceId}`);
 
-        onValue(dbRef, (snapshot) => {
-            const data: DeviceModel = snapshot.val();
+        return new Observable<DeviceModel>((observer) => {
+            const unsubscribe = onValue(
+                dbRef,
+                (snapshot) => {
+                    const data: DeviceModel = snapshot.val();
+                    observer.next(data);
+                },
+                (error) => {
+                    observer.error(error);
+                }
+            );
 
-            console.log(data.status);
+            return () => unsubscribe();
         });
     }
 
@@ -141,13 +155,13 @@ export class iKettleService {
         this.authenticate();
         const db = getDatabase(this.app);
 
-        console.log(`Sending command: ${JSON.stringify(commandData)}`);
+        this.log.debug(`Sending command: ${JSON.stringify(commandData)}`);
 
         try {
             const commandRef = ref(db, `devices/${deviceId}/commands/${command}`);
             await push(commandRef, commandData);
         } catch (error) {
-            console.error('Error sending command:', error);
+            this.log.error('Error sending command:', error);
         }
     }
 

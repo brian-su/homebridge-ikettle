@@ -1,5 +1,6 @@
 export interface DeviceModel {
     id: string;
+    userId: string;
     name: string;
     commands: Commands;
     settings: Settings;

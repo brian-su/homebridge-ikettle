@@ -52,67 +52,41 @@ export class IKettlePlatform implements DynamicPlatformPlugin {
     }
 
     discoverDevices() {
-        const iKettle = iKettleService.getInstance();
+        const iKettle = iKettleService.getInstance(this.log);
 
         this.log.info('GETTING DEVICES');
 
         iKettle.connect(this.config).subscribe({
             next: (deviceModel) => {
-                this.log.info(`Got Device: ${deviceModel.id}`);
-                const accessory = new this.api.platformAccessory(deviceModel.name, deviceModel.id);
-                accessory.context.device = deviceModel;
-                new iKettlePlatformAccessory(this, accessory);
-                this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+                const uuid = this.api.hap.uuid.generate(deviceModel.id);
+
+                const existingAccessory = this.accessories.get(uuid);
+                if (existingAccessory) {
+                    this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+                    new iKettlePlatformAccessory(this, existingAccessory);
+                } else {
+                    this.log.info(`Got Device: ${deviceModel.id} - ${deviceModel.name}`);
+                    const accessory = new this.api.platformAccessory(deviceModel.name, uuid);
+                    accessory.context.device = deviceModel;
+                    new iKettlePlatformAccessory(this, accessory);
+                    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+                }
+
+                this.discoveredCacheUUIDs.push(uuid);
             },
             error: (error) => {
                 this.log.info(error);
             },
             complete: () => {
-                this.log.info('finished');
+                this.log.info('Finished Kettle Discovery');
+
+                for (const [uuid, accessory] of this.accessories) {
+                    if (!this.discoveredCacheUUIDs.includes(uuid)) {
+                        this.log.info('Removing existing accessory from cache:', accessory.displayName);
+                        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+                    }
+                }
             }
         });
-
-        // // loop over the discovered devices and register each one if it has not already been registered
-        // for (const device of exampleDevices) {
-        //     const uuid = this.api.hap.uuid.generate(device.exampleUniqueId);
-
-        //     // see if an accessory with the same uuid has already been registered and restored from
-        //     // the cached devices we stored in the `configureAccessory` method above
-        //     const existingAccessory = this.accessories.get(uuid);
-
-        //     if (existingAccessory) {
-        //         // the accessory already exists
-        //         this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
-        //         new ExamplePlatformAccessory(this, existingAccessory);
-        //     } else {
-        //         // the accessory does not yet exist, so we need to create it
-        //         this.log.info('Adding new accessory:', device.exampleDisplayName);
-
-        //         // create a new accessory
-        //         const accessory = new this.api.platformAccessory(device.exampleDisplayName, uuid);
-
-        //         // store a copy of the device object in the `accessory.context`
-        //         // the `context` property can be used to store any data about the accessory you may need
-        //         accessory.context.device = device;
-
-        //         // create the accessory handler for the newly create accessory
-        //         // this is imported from `platformAccessory.ts`
-        //         new ExamplePlatformAccessory(this, accessory);
-
-        //         // link the accessory to your platform
-        //         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-        //     }
-
-        //     // push into discoveredCacheUUIDs
-        //     this.discoveredCacheUUIDs.push(uuid);
-        // }
-
-        // for (const [uuid, accessory] of this.accessories) {
-        //     if (!this.discoveredCacheUUIDs.includes(uuid)) {
-        //         this.log.info('Removing existing accessory from cache:', accessory.displayName);
-        //         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-        //     }
-        // }
     }
 }

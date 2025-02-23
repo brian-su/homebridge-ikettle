@@ -6,7 +6,7 @@
     "schema": {
         "type": "object",
         "properties": {
-            "name": {
+            "email": {
                 "title": "Email address of your Smarter.Am Account",
                 "type": "string",
                 "required": true,
