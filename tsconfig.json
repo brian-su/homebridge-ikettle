@@ -2,16 +2,16 @@
     "compilerOptions": {
         "target": "ES2022",
         "lib": ["DOM", "ES2022"],
+        "rootDir": "src",
         "module": "ES2022",
         "moduleResolution": "node",
         "strict": true,
         "declaration": true,
-        "outDir": "./dist",
-        "rootDir": "./src",
+        "outDir": "dist",
         "sourceMap": true,
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/"]
+    "include": ["homebridge-ui", "src"]
 }

@@ -64,8 +64,12 @@ export class IKettlePlatform implements DynamicPlatformPlugin {
                 new iKettlePlatformAccessory(this, accessory);
                 this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
             },
-            error: (error) => {},
-            complete: () => {}
+            error: (error) => {
+                this.log.info(error);
+            },
+            complete: () => {
+                this.log.info('finished');
+            }
         });
 
         // // loop over the discovered devices and register each one if it has not already been registered

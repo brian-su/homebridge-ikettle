@@ -7,8 +7,7 @@ import { DeviceModel } from './models/deviceModel';
 import { CommandModel } from './models/commandModel';
 import { Observable } from 'rxjs';
 import { PlatformConfig } from 'homebridge';
-import { SUPPORTED_DEVICES } from './models/constants';
-// import { SUPPORTED_DEVICES } from './models/constants';
+import { SUPPORTED_DEVICES } from './models/constants.js';
 
 export class iKettleService {
     private app: FirebaseApp;
