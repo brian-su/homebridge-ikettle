@@ -2,11 +2,11 @@
 dist
 
 # ------------- Defaults ------------- #
-.DS_Store
 
 # Logs
 logs
 *.log
+log.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -120,7 +120,9 @@ dist
 .yarn/build-state.yml
 .pnp.*
 
-# Webstorm
-.idea
+.vscode
+.DS_Store
 
-/test/hbConfig
+test/hbConfig/*
+!test/hbConfig/auth.json
+!test/hbConfig/config.json

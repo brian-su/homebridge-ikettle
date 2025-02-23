@@ -1,17 +1,23 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
-  "pluginType": "platform",
-  "singular": true,
-  "strictValidation": false,
-  "schema": {
-    "type": "object",
-    "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
-      }
+    "pluginAlias": "iKettle",
+    "pluginType": "platform",
+    "singular": true,
+    "strictValidation": false,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "email": {
+                "title": "Email address of your Smarter.Am Account",
+                "type": "string",
+                "required": true,
+                "default": "example@example.com"
+            },
+            "password": {
+                "title": "Password of your Smarter.Am Account",
+                "type": "string",
+                "required": true,
+                "default": "xxxxx"
+            }
+        }
     }
-  }
 }

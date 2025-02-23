@@ -5,9 +5,10 @@ src
 
 # gitHub actions
 .github
+.husky
 
 # eslint
-eslint.config.js
+.eslintrc
 
 # typescript
 tsconfig.json
@@ -101,6 +102,7 @@ web_modules/
 
 # Nuxt.js build / generate output
 .nuxt
+dist
 
 # Gatsby files
 .cache/
@@ -132,5 +134,3 @@ web_modules/
 .yarn/unplugged
 .yarn/build-state.yml
 .pnp.*
-
-test/
