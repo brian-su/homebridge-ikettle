@@ -168,7 +168,7 @@ export class iKettleService {
     private async authenticate() {
         const tokenExpiry = new Date((this.userCredential as any).user.stsTokenManager.expirationTime);
 
-        await this.userCredential?.user.getIdToken(true);
+        await this.userCredential?.user.getIdToken();
         return;
 
         if (tokenExpiry <= new Date()) {
