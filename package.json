@@ -9,7 +9,7 @@
     "homepage": "https://github.com/brian-su/homebridge-ikettle#readme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/brian-su/homebridge-ikettle.git"
+        "url": "git+https://github.com/brian-su/homebridge-ikettle.git"
     },
     "bugs": {
         "url": "https://github.com/brian-su/homebridge-ikettle/issues"
