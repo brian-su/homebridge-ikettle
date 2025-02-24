@@ -2,8 +2,8 @@
     "name": "homebridge-ikettle",
     "displayName": "iKettle",
     "type": "module",
-    "version": "1.0.0-beta",
-    "description": "iKettle integration right into the Home app.",
+    "version": "1.0.0",
+    "description": "Simple HomeKit control for your iKettle. Easy access without faffing with Siri Shortcuts/IFTTT.",
     "author": "Brian Surgenor",
     "license": "MIT",
     "homepage": "https://github.com/brian-su/homebridge-ikettle#readme",
@@ -15,7 +15,12 @@
         "url": "https://github.com/brian-su/homebridge-ikettle/issues"
     },
     "keywords": [
-        "homebridge-plugin"
+        "homebridge-plugin",
+        "homebridge",
+        "iKettle",
+        "kettle",
+        "smarter.am",
+        "smarter iKettle"
     ],
     "main": "dist/index.js",
     "engines": {
@@ -25,7 +30,7 @@
     "scripts": {
         "build": "rimraf ./dist && tsc",
         "lint": "eslint . --max-warnings=0",
-        "prepublishOnly": "npm run lint && npm run build",
+        "prepublishOnly": "npm run build",
         "watch": "npm run build && npm link && nodemon",
         "pretty": "prettier --config .prettierrc 'src/**/*.ts' '*.json' --write",
         "prepare": "husky install"

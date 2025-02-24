@@ -1,38 +1,47 @@
-[![Build and Lint](https://github.com/brian-su/homebridge-iKettle/actions/workflows/build.yml/badge.svg)](https://github.com/brian-su/homebridge-iKettle/actions/workflows/build.yml)
-[![npm](https://img.shields.io/npm/v/homebridge-ikettle.svg)](https://www.npmjs.com/package/homebridge-ikettle)
-[![npm](https://img.shields.io/npm/dt/homebridge-ikettle.svg)](https://www.npmjs.com/package/homebridge-ikettle)
-[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 # Homebridge iKettle
 
-## What does it do?
+## Turn your iKettle into a HomeKit device! 🫖
 
-If you too are annoyed by the flaky Siri Shortcuts integration of your iKettle then this is plugin for you!
+Fed up with flaky Siri Shortcut integration for your iKettle? This plugin sorts that right out! It lets you control your kettle directly through HomeKit - properly reliable this time, in theory!
 
-Given that HomeKit has no Kettle device type the plugin exposes the kettle as a thermostat. Humidity level is water level, temperature and heating mode are as you'd expect.
+## How it works
 
-You may want to put the device in a separate room of it's own, especially if you have existing temperature and humidity sensors as the kettle will register these to whatever room you put it in and having Siri tell you the temperature of your kitchen ranges from 20 - 100 degrees isn't very helpful.
+Since HomeKit hasn't got a proper kettle device type, this plugin exposes the kettle as a thermostat to HomeKit:
 
-Once installed you should have fast, not flaky control over your kettle. Additionally as the settings are exposed into HomeKit you can now do things like convert a scene to a shortcut and have it check the water level before turning the kettle on.
+- Water level shows up as humidity
+- Temperature and heating controls work as you'd expect
+
+**Handy tip:** If you have existing thermostats/humidity sensors, put your kettle in its own room in HomeKit. Otherwise, as the kettle reports its temperature and water level as room readings, Siri will report your Kitchen temp as 100C.
 
 ## Installation
 
-Either search via the Homebridge config for homebridge-ikettle
+Two ways to get it sorted:
+
+1. Search for "homebridge-ikettle" in your Homebridge config UI
+2. Or pop this in your terminal:
 
 ```
 npm install homebridge-ikettle -g
 ```
 
-Once installed update the config and reboot your homebridge. The plugin will handle the rest.
+Once installed, just update your config either via the UI or use the below and restart Homebridge. The plugin handles the rest!
 
-## Caveats
+```json
+{
+    "email": "example@example.com",
+    "password": "XXXXXXXX",
+    "platform": "iKettle"
+}
+```
 
-I only have 1 v3 iKettle. So that's all I've tested this with. I _think_ it should work if you have multiple v3 Kettles but I make no promises about a v2 or v1 iKettle.
+## Worth noting
 
-Currently the plugin specifically looks for the device model 'SMKET01', partly to stop it trying to pick up and interact incorrectly with a coffee machine, if you want to try your v1/v2 iKettle open up an issue on the repo and I'll see what I can do.
+- Only properly tested with iKettle v3 (Model: SMKET01)
+- Might work with multiple v3 kettles (though not tested)
+- Only does Celsius
+- Specifically looks for model 'SMKET01' to avoid any bother with coffee machines
+- Got an earlier version (v1/v2)? Pop an issue on GitHub and I'll have a look!
 
-Also the plugin only support Celsius right now.
+## Thanks
 
-### References
-
-A big thank you to [kbirger](https://github.com/kbirger/smarter-kettle-client) for their Python client which was the basis for the being able to build this in Node for HomeKit.
+Massive thanks to [kbirger](https://github.com/kbirger/smarter-kettle-client) for their Python client, it was a great base for getting this Node/HomeKit version up and running! 🙌
