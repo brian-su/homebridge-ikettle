@@ -1,3 +1,8 @@
+[![Build and Lint](https://github.com/brian-su/homebridge-iKettle/actions/workflows/build.yml/badge.svg)](https://github.com/brian-su/homebridge-iKettle/actions/workflows/build.yml)
+[![npm](https://img.shields.io/npm/v/homebridge-ikettle.svg)](https://www.npmjs.com/package/homebridge-ikettle)
+[![npm](https://img.shields.io/npm/dt/homebridge-ikettle.svg)](https://www.npmjs.com/package/homebridge-ikettle)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 # Homebridge iKettle
 
 ## Turn your iKettle into a HomeKit device! 🫖
@@ -21,7 +26,7 @@ Two ways to get it sorted:
 2. Or pop this in your terminal:
 
 ```
-npm install homebridge-ikettle -g
+npm install -g --omit=dev homebridge-ikettle
 ```
 
 Once installed, just update your config either via the UI or use the below and restart Homebridge. The plugin handles the rest!
